@@ -45,7 +45,7 @@ This is a standalone network discovery tool for PrivateGlue. It can scan your lo
 - Combine options:
 
   ```powershell
-  python probe.py --subnet 10.0.0 --backend http://yourserver:5000/api/discovered-devices
+  python probe.py --subnet 10.0.0 --backend http://yourserver:5000/api/discovered-devices --apikey YOUR_API_KEY
   ```
 
 ### 2. As a Standalone Executable
@@ -55,7 +55,7 @@ If you have `probe.exe` (built with PyInstaller):
 - Double-click to run, or use in PowerShell/cmd with the same arguments as above:
 
   ```powershell
-  .\probe.exe --subnet 192.168.1 --backend http://yourserver:5000/api/discovered-devices
+  .\probe.exe --subnet 192.168.1 --backend http://yourserver:5000/api/discovered-devices --apikey YOUR_API_KEY
   ```
 
 ## How it works
