@@ -49,6 +49,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Network probe for device discovery.")
     parser.add_argument('--subnet', type=str, help='Subnet prefix to scan (e.g. 192.168.1)')
     parser.add_argument('--backend', type=str, default='http://localhost:5000/api/discovered-devices', help='Backend URL to POST results')
+    parser.add_argument('--apikey', type=str, help='API key for authentication with backend')
     args = parser.parse_args()
 
     if args.subnet:
@@ -66,6 +67,9 @@ if __name__ == "__main__":
         print(f"Found {len(devices)} devices on {subnet_prefix}.0/24.")
         all_devices.extend(devices)
 
+    headers = {}
+    if args.apikey:
+        headers["X-API-KEY"] = args.apikey
     print(f"Sending {len(all_devices)} devices to backend {args.backend} ...")
-    resp = requests.post(args.backend, json={"devices": all_devices})
+    resp = requests.post(args.backend, json={"devices": all_devices}, headers=headers)
     print("Backend response:", resp.json())
