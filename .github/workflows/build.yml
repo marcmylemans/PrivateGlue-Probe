@@ -1,0 +1,70 @@
+name: Test and build
+
+# Every push and pull request: run the tests on Linux and Windows, do one real scan of the
+# machine's own loopback addresses, and build probe.exe.
+# A tag such as v2.0.0 also publishes probe.exe and its checksum as a GitHub release.
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - name: Unit tests
+        run: python -m unittest discover -s tests -v
+      - name: Real scan of the loopback range (must find 127.0.0.1)
+        shell: bash
+        run: |
+          python probe.py --dry-run --subnet 127.0.0.0/30 | tee scan.txt
+          grep -q "127.0.0.1" scan.txt
+
+  build-exe:
+    needs: test
+    runs-on: windows-latest
+    permissions:
+      contents: write   # only used on tags, to attach the files to the release
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt pyinstaller==6.22.3
+      - name: Build probe.exe
+        run: pyinstaller --onefile --name probe probe.py
+      - name: The built file starts and scans
+        shell: bash
+        run: |
+          ./dist/probe.exe --version
+          ./dist/probe.exe --dry-run --subnet 127.0.0.0/30 | tee scan.txt
+          grep -q "127.0.0.1" scan.txt
+      - name: Checksum
+        shell: bash
+        run: cd dist && sha256sum probe.exe > probe.exe.sha256 && cat probe.exe.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: probe-windows
+          path: |
+            dist/probe.exe
+            dist/probe.exe.sha256
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/probe.exe dist/probe.exe.sha256 --title "$GITHUB_REF_NAME" --generate-notes
