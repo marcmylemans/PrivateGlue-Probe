@@ -103,6 +103,10 @@ pyinstaller --onefile --name probe probe.py
 
 The file ends up in `dist`. The releases are built the same way by GitHub Actions (`.github/workflows/build.yml`), not on anyone's own computer.
 
+### Publishing a release (maintainers)
+
+Push a tag such as `v2.1.0`, or create a release for a new tag in the browser. Either way the workflow builds `probe.exe` and attaches it, its checksum, `probe.py` and `requirements.txt` to the release. To build an existing tag again, start the workflow by hand (Actions > Test and build > Run workflow) and give it the tag.
+
 ## Development
 
 ```bash
